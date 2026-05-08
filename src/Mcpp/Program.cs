@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -99,6 +100,15 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
     McpLogger.Log("Startup",
         $"Done in {sw.Elapsed.TotalSeconds:F1}s — " +
         $"{stats.symbols} symbols, {stats.refs} refs, {stats.calls} calls");
+
+    // Close DB (checkpoints WAL) and clean up sidecar files
+    db.Dispose();
+    SqliteConnection.ClearAllPools();
+    foreach (var ext in new[] { "-wal", "-shm" })
+    {
+        var f = dbPath + ext;
+        if (File.Exists(f)) try { File.Delete(f); } catch { }
+    }
 }
 
 // ──────────────────────────────────────────────────────────────
