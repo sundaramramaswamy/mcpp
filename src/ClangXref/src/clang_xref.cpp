@@ -680,11 +680,31 @@ static clang::tooling::ArgumentsAdjuster getMsvcAdjuster() {
                 Adjusted.push_back(Args[i]);
                 continue;
             }
-            // Skip other source files, /c, output flags
+            // Skip other source files, /c, output flags, @response files
             if (A.ends_with(".cpp") || A.ends_with(".cc") ||
                 A.ends_with(".cxx") || A.ends_with(".c") ||
                 A.ends_with(".obj") || A.ends_with(".exe") ||
-                A == "/c" || A == "-c")
+                A == "/c" || A == "-c" ||
+                A.starts_with("@"))
+                continue;
+            // Rewrite /external:I<path> → /I<path> (Clang doesn't support /external:)
+            if (A.size() > 12 &&
+                (A.starts_with_insensitive("/external:I") ||
+                 A.starts_with_insensitive("-external:I"))) {
+                Adjusted.push_back(("/I" + A.substr(11)).str());
+                continue;
+            }
+            // Handle space-separated /external:I <path>
+            if ((A.equals_insensitive("/external:I") ||
+                 A.equals_insensitive("-external:I")) &&
+                i + 1 < Args.size()) {
+                Adjusted.push_back("/I");
+                Adjusted.push_back(Args[++i]);
+                continue;
+            }
+            // Drop other /external: flags (e.g. /external:W0)
+            if (A.starts_with_insensitive("/external:") ||
+                A.starts_with_insensitive("-external:"))
                 continue;
             if (isKeptFlag(A)) {
                 Adjusted.push_back(Args[i]);
