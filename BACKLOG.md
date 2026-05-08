@@ -4,14 +4,11 @@ Parked features and known gaps. Pick these up when the core is working end-to-en
 
 ## Must-do (before first real use)
 
-- [ ] **Wire ILogger with McpLogger** — tool invocation logging per MCP SDK 1.3.0
-  `ILoggerProvider` pattern. Every tool call should log name + args + duration to
-  stderr + log file, matching expected behavior. See SDK docs:
-  https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/logging/logging.md
+- [x] **Wire ILogger with McpLogger** — done. `McpLoggerProvider` registered in
+  `Program.cs` `RunServe()`. Default providers cleared to protect stdout.
 
-- [ ] **Build ClangXref.dll** — run `etc/scripts/setup-deps.ps1` (downloads ~2 GB
-  LLVM libs), then `msbuild src\ClangXref\ClangXref.vcxproj /p:Configuration=Release
-  /p:Platform=x64`. DLL goes to `bin/ClangXref.dll`.
+- [x] **Build ClangXref.dll** — done. LLVM 21.1.1 deps downloaded, DLL built
+  (28 MB) at `bin/ClangXref.dll`.
 
 - [ ] **End-to-end test** — index a real project with `mcpp index`, then `mcpp serve`.
   Test candidates: `D:\Code\tryouts\ProtoMario` and `D:\Code\tryouts\CG\Partize`.
