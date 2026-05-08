@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Mcpp.Indexing;
 
 // --- Root command ---
@@ -132,8 +133,9 @@ static void RunServe(FileInfo dbFile)
     db.MarkReady();
 
     // Wire MCP stdio server
-    // TODO: integrate ILogger with McpLogger for tool invocation logging
     var builder = Host.CreateApplicationBuilder();
+    builder.Logging.ClearProviders();
+    builder.Logging.AddProvider(new McpLoggerProvider());
 
     builder.Services.AddSingleton(db);
     builder.Services.AddSingleton(indexer);
