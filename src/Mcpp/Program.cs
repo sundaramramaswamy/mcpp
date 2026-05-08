@@ -1,5 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Mcpp.Indexing;
 
 // --- Root command ---
@@ -30,20 +32,9 @@ root.Subcommands.Add(indexCmd);
 var serveDbArg = new Argument<FileInfo>("db");
 serveDbArg.Description = "Path to xref.db";
 
-var serveTransportOpt = new Option<string>("--transport");
-serveTransportOpt.Description = "MCP transport: stdio (default) or http";
-serveTransportOpt.DefaultValueFactory = (_) => "stdio";
-
-var servePortOpt = new Option<int>("--port");
-servePortOpt.Description = "HTTP port (only used with --transport http)";
-servePortOpt.DefaultValueFactory = (_) => 8080;
-
-var serveCmd = new Command("serve", "Start MCP server with a pre-built xref.db");
+var serveCmd = new Command("serve", "Start stdio MCP server with a pre-built xref.db");
 serveCmd.Arguments.Add(serveDbArg);
-serveCmd.Options.Add(serveTransportOpt);
-serveCmd.Options.Add(servePortOpt);
-serveCmd.SetAction(ctx => RunServe(ctx.GetValue(serveDbArg)!,
-    ctx.GetValue(serveTransportOpt)!, ctx.GetValue(servePortOpt)));
+serveCmd.SetAction(ctx => RunServe(ctx.GetValue(serveDbArg)!));
 root.Subcommands.Add(serveCmd);
 
 return root.Parse(args).Invoke();
@@ -110,9 +101,9 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
 }
 
 // ──────────────────────────────────────────────────────────────
-// serve: load xref.db → start MCP server
+// serve: load xref.db → start stdio MCP server
 // ──────────────────────────────────────────────────────────────
-static void RunServe(FileInfo dbFile, string transport, int port)
+static void RunServe(FileInfo dbFile)
 {
     McpLogger.Init();
 
@@ -130,7 +121,30 @@ static void RunServe(FileInfo dbFile, string transport, int port)
         Environment.Exit(1);
     }
 
-    McpLogger.Log("Startup", "MCP server not yet wired — coming next commit.");
-    // TODO: wire MCP host with CppSemanticTools
+    var stats = db.GetStats();
+    McpLogger.Log("Startup",
+        $"Loaded: {stats.symbols} symbols, {stats.refs} refs, {stats.calls} calls");
+
+    // CppIndexer with empty compdb path — serve mode doesn't index, but
+    // CppSemanticTools needs it for IsReady checks and priority hints.
+    var compdbDir = dbFile.DirectoryName ?? ".";
+    var indexer = new CppIndexer(db, compdbDir, "");
+    db.MarkReady();
+
+    // Wire MCP stdio server
+    // TODO: integrate ILogger with McpLogger for tool invocation logging
+    var builder = Host.CreateApplicationBuilder();
+
+    builder.Services.AddSingleton(db);
+    builder.Services.AddSingleton(indexer);
+    builder.Services
+        .AddMcpServer()
+        .WithStdioServerTransport()
+        .WithToolsFromAssembly();
+
+    var app = builder.Build();
+
+    McpLogger.Log("Startup", "MCP server ready (stdio)");
+    app.Run();
 }
 

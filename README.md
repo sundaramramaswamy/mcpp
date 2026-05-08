@@ -53,7 +53,7 @@ mcpp serve xref.db --transport http --port 8080
 
 ```powershell
 # 1. Download LLVM dependencies
-pwsh scripts/setup-deps.ps1
+pwsh etc/scripts/setup-deps.ps1
 
 # 2. Build native DLL (needs VS 2022 Developer Command Prompt)
 msbuild src\ClangXref\ClangXref.vcxproj /p:Configuration=Release /p:Platform=x64

@@ -71,7 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\..\..\scripts\setup-deps.ps1" -DepsDir "$(DepsDir)"</Command>
+      <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "$(MSBuildProjectDirectory)\..\..\etc\scripts\setup-deps.ps1" -DepsDir "$(DepsDir)"</Command>
       <Message>Ensuring LLVM/Clang $(LlvmVersion) dependencies...</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
