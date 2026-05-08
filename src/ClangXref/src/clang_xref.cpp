@@ -384,8 +384,9 @@ public:
         std::string File = makeRelative(PLoc.getFilename(), BaseDir);
 
         // Skip symbols/refs in system headers (Windows SDK, CRT, STL).
-        // Only index repo-local files to keep the DB manageable.
-        if (!isRepoLocal(File))
+        // Use Clang's own system header detection rather than path-prefix
+        // matching, so out-of-tree builds (e.g. CMake build/) work correctly.
+        if (SM.isInSystemHeader(Loc))
             return true;
 
         int Line = PLoc.getLine();
@@ -658,13 +659,12 @@ static bool isKeptFlag(llvm::StringRef Flag) {
                (first >= 'a' && first <= 'z');
     }
 
-    return startsI("/std:") ||
+    return startsI("/std:") || startsI("-std:") ||
            startsI("/TP") || startsI("/TC") ||
            startsI("/Zc:wchar_t") || startsI("/Zc:forScope") ||
            startsI("/Zc:inline") || startsI("/Zc:strictStrings") ||
            startsI("/wd") ||
-           startsI("-std=") ||
-           Flag == "--driver-mode=cl";
+           startsI("-std=");
 }
 
 static clang::tooling::ArgumentsAdjuster getMsvcAdjuster() {
