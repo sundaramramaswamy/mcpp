@@ -641,9 +641,23 @@ public sealed class XrefDatabase : IDisposable
 
     public void Close()
     {
-        _connection?.Close();
-        _connection?.Dispose();
-        _connection = null;
+        if (_connection != null)
+        {
+            // Checkpoint WAL to main DB file before closing.
+            // Without this, data stays in the WAL file which gets
+            // orphaned when the DB file is moved (e.g. atomic swap).
+            try
+            {
+                using var cmd = _connection.CreateCommand();
+                cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE)";
+                cmd.ExecuteNonQuery();
+            }
+            catch { }
+
+            _connection.Close();
+            _connection.Dispose();
+            _connection = null;
+        }
     }
 
     public void Dispose()
