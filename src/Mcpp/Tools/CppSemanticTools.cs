@@ -41,8 +41,7 @@ public sealed class CppSemanticTools
      Description("Find all functions/methods that directly call the given symbol (1-hop incoming). " +
                  "For multi-hop reachability ('can A eventually reach B?'), use find_call_path. " +
                  "For transitive blast-radius ('what's affected if I change this?'), use get_impact_radius. " +
-                 "Works with internal C++ types not visible in metadata. " +
-                 "Example: find_callers('OnApplyTemplate') or find_callers('vector::Add')")]
+                 "Example: find_callers('HashGrid::query') or find_callers('Scene::update')")]
     public string FindCallers(string symbol)
     {
         if (!CheckReady(out var msg, symbol)) return msg;
@@ -74,7 +73,7 @@ public sealed class CppSemanticTools
      Description("Find all functions/methods that the given symbol directly calls (1-hop outgoing). " +
                  "Shows what a function does internally — its direct dependencies. " +
                  "For multi-hop paths between two functions, use find_call_path. " +
-                 "Example: find_callees('OnApplyTemplate') or find_callees('CInputManager::ProcessInput')")]
+                 "Example: find_callees('main') or find_callees('Scene::update')")]
     public string FindCallees(string symbol)
     {
         if (!CheckReady(out var msg, symbol)) return msg;
@@ -107,7 +106,7 @@ public sealed class CppSemanticTools
                  "Includes call sites, macro expansions, and #include directives. " +
                  "For finding just the callers of a function (structured call graph), use find_callers. " +
                  "For finding where a symbol is defined, use get_cpp_definition. " +
-                 "Example: find_cpp_references('vector') or find_cpp_references('FAIL_FAST_ASSERT')")]
+                 "Example: find_cpp_references('HashGrid') or find_cpp_references('MAX_OBJECTS')")]
     public string FindCppReferences(string symbol)
     {
         if (!CheckReady(out var msg, symbol)) return msg;
@@ -135,7 +134,7 @@ public sealed class CppSemanticTools
      Title = "Find the definition of a C++ symbol"),
      Description("Find where a C++ symbol is defined (class, function, method, variable, enum, macro, etc.). " +
                  "Returns the file, line, kind, and signature. Also finds #define macro definitions. " +
-                 "Example: get_cpp_definition('vector') or get_cpp_definition('FAIL_FAST_ASSERT')")]
+                 "Example: get_cpp_definition('HashGrid') or get_cpp_definition('MAX_OBJECTS')")]
     public string GetCppDefinition(string symbol)
     {
         if (!CheckReady(out var msg, symbol)) return msg;
@@ -172,7 +171,7 @@ public sealed class CppSemanticTools
      Description("List all methods, fields, and nested types of a C++ class or struct. " +
                  "Shows member names, kinds, signatures, and source locations. " +
                  "For member-level caller counts and dead code analysis, use get_symbol_stats instead. " +
-                 "Example: get_class_members('vector') or get_class_members('CInputManager')")]
+                 "Example: get_class_members('HashGrid') or get_class_members('StaticScene')")]
     public string GetClassMembers(string className)
     {
         if (!CheckReady(out var msg, className)) return msg;
@@ -212,7 +211,7 @@ public sealed class CppSemanticTools
                  "Answers: 'Is this a god-class?', 'Which methods are dead code (0 callers)?', " +
                  "'Which methods are hotspots (many callers)?' " +
                  "For just listing members without stats, use get_class_members. " +
-                 "Example: get_symbol_stats('CInputManager')")]
+                 "Example: get_symbol_stats('HashGrid')")]
     public string GetSymbolStats(string className)
     {
         if (!CheckReady(out var msg, className)) return msg;
@@ -253,7 +252,7 @@ public sealed class CppSemanticTools
                  "Returns symbol definitions — where things are declared/defined. " +
                  "For finding all usage sites of a known symbol, use find_cpp_references instead. " +
                  "For finding callers of a function, use find_callers. " +
-                 "Example: search_cpp_symbols('FocusManager') or search_cpp_symbols('FAIL_FAST')")]
+                 "Example: search_cpp_symbols('Scene') or search_cpp_symbols('MAX_')")]
     public string SearchCppSymbols(string query, int maxResults = 30)
     {
         if (!CheckReady(out var msg, query)) return msg;
@@ -434,7 +433,7 @@ public sealed class CppSemanticTools
                  "Uses bidirectional BFS over the call graph. Returns all shortest paths. " +
                  "For single-hop callers/callees, use find_callers or find_callees. " +
                  "For paths that must pass through a specific function, use find_call_path_via. " +
-                 "Example: find_call_path('ProcessPointerInput', 'InvalidateArrange')")]
+                 "Example: find_call_path('main', 'HashGrid::query')")]
     public string FindCallPath(string from, string to, int maxDepth = 10)
     {
         if (!CheckCallGraphReady(out var msg)) return msg;
@@ -476,7 +475,7 @@ public sealed class CppSemanticTools
      Title = "Find call path between two C++ functions through a waypoint"),
      Description("Find call paths from A to B that pass through C. " +
                  "Useful for impact analysis: does changing C affect the path from A to B? " +
-                 "Example: find_call_path_via('OnApplyTemplate', 'InvalidateArrange', 'UpdateFocus')")]
+                 "Example: find_call_path_via('main', 'HashGrid::query', 'Scene::update')")]
     public string FindCallPathVia(string from, string to, string via, int maxDepth = 10)
     {
         if (!CheckCallGraphReady(out var msg)) return msg;
