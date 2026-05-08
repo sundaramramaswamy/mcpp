@@ -1,0 +1,14 @@
+# Build output
+bin/
+
+# LLVM/Clang prebuilt dependencies (downloaded by setup-deps.ps1)
+deps/
+
+# IDE / user files
+.vs/
+*.user
+*.suo
+
+# .NET build artifacts
+obj/
+*.nupkg
