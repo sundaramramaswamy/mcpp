@@ -689,7 +689,7 @@ public sealed class CppSemanticTools
         {
             try
             {
-                var files = Directory.GetFiles(_repo.RepoRoot, pattern, SearchOption.AllDirectories);
+                var files = Directory.GetFiles(_cppIndexer.RepoRoot, pattern, SearchOption.AllDirectories);
                 foreach (var f in files.Take(10))  // cap to avoid flooding
                     _cppIndexer.Prioritize(f);
             }

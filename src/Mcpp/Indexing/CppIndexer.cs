@@ -34,6 +34,8 @@ public sealed class CppIndexer
         _compileCommandsPath = compileCommandsPath;
     }
 
+    public string RepoRoot => _repoRoot;
+
     /// <summary>
     /// Request that a file be indexed ahead of the sequential queue.
     /// Accepts absolute or repo-relative paths. Safe to call from any thread.

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Mcpp</RootNamespace>
+    <AssemblyName>mcpp</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <McpBinDir>$(MSBuildProjectDirectory)\..\..\bin\</McpBinDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.3" />
+    <PackageReference Include="System.CommandLine" Version="2.0.5" />
+  </ItemGroup>
+
+  <!-- Copy exe + all runtime deps to bin/ alongside ClangXref.dll -->
+  <Target Name="CopyToMcpBin" AfterTargets="Build">
+    <MakeDir Directories="$(McpBinDir)" />
+    <ItemGroup>
+      <McpBinFiles Include="$(OutDir)**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(McpBinFiles)"
+          DestinationFiles="@(McpBinFiles->'$(McpBinDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
