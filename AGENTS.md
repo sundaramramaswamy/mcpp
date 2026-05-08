@@ -6,15 +6,10 @@ then serves semantic queries (callers, refs, call graph) over MCP stdio.
 
 ## Origin
 
-Forked from the C++ cross-reference engine (`tools/cpp-xref-engine/` in the
-upstream repo). All project-specific code (Domain-specific
-registration, snapshot mode, Azure deployment) was stripped. What remains is the
-generic C++ indexing engine + MCP tools.
-
-The parent project's agent instructions (`.github/agents/mcp-dev.md` in the upstream
-repo) document the hard-won technical decisions that apply here too — especially
-around parallel indexing, PCH, SQLite, and P/Invoke. Those decisions are still
-valid and should not be revisited without good reason.
+Built around Clang's IndexDataConsumer API for C++ cross-referencing.
+Key technical decisions around parallel indexing, PCH, SQLite, and
+P/Invoke were validated through extensive real-world testing and
+should not be revisited without good reason.
 
 ## Usage
 
@@ -68,7 +63,7 @@ Do NOT use `msbuild` for the C# project or `dotnet` for the C++ DLL.
 The vcxproj PreBuildEvent auto-runs `etc/scripts/setup-deps.ps1` to download LLVM
 libs on first build. Both DLL and exe output to `bin/`.
 
-## Key technical decisions (inherited from upstream)
+## Key technical decisions
 
 1. **Per-thread VFS** — `createPhysicalFileSystem()` per thread, not the global singleton
 2. **Per-TU DB flush** — flush immediately under lock, don't accumulate

@@ -627,10 +627,9 @@ private:
  * for AST parsing.
  *
  * NOTE: We tried replacing this with native clang flag translation
- * but native mode fails
- * on this codebase — errors from system headers, missing platform
- * headers (corerror.h), and MSVC-specific using declarations.
- * --driver-mode=cl is required.
+ * but native mode fails on MSVC-compiled codebases — errors from
+ * system headers, missing platform headers, and MSVC-specific
+ * using declarations.  --driver-mode=cl is required.
  */
 
 static bool isKeptFlag(llvm::StringRef Flag) {

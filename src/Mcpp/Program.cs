@@ -13,8 +13,8 @@ var root = new RootCommand("mcpp — C++ cross-reference MCP server");
 var indexFileArg = new Argument<FileInfo>("file");
 indexFileArg.Description = "Path to compile_commands.json (or directory containing it)";
 
-var indexOutputOpt = new Option<FileInfo>("-o") { Required = true };
-indexOutputOpt.Description = "Output xref.db path";
+var indexOutputOpt = new Option<FileInfo?>("-o");
+indexOutputOpt.Description = "Output xref.db path (default: xref.db next to compile_commands.json)";
 indexOutputOpt.Aliases.Add("--output");
 
 var indexThreadsOpt = new Option<int>("-j");
@@ -27,7 +27,7 @@ indexCmd.Arguments.Add(indexFileArg);
 indexCmd.Options.Add(indexOutputOpt);
 indexCmd.Options.Add(indexThreadsOpt);
 indexCmd.SetAction(ctx => RunIndex(ctx.GetValue(indexFileArg)!,
-    ctx.GetValue(indexOutputOpt)!, ctx.GetValue(indexThreadsOpt)));
+    ctx.GetValue(indexOutputOpt), ctx.GetValue(indexThreadsOpt)));
 root.Subcommands.Add(indexCmd);
 
 // --- serve subcommand ---
@@ -44,7 +44,7 @@ return root.Parse(args).Invoke();
 // ──────────────────────────────────────────────────────────────
 // index: parse compile_commands.json → build xref.db
 // ──────────────────────────────────────────────────────────────
-static void RunIndex(FileInfo input, FileInfo output, int threads)
+static void RunIndex(FileInfo input, FileInfo? output, int threads)
 {
     McpLogger.Init();
 
@@ -68,8 +68,8 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
         Environment.Exit(1);
     }
 
-    // Validate output path is a file, not a directory
-    var dbPath = output.FullName;
+    // Default output: xref.db next to compile_commands.json
+    var dbPath = output?.FullName ?? Path.Combine(compdbDir, "xref.db");
     if (Directory.Exists(dbPath))
     {
         McpLogger.Log("Startup", $"-o must be a file path, not a directory: {dbPath}", "ERROR");

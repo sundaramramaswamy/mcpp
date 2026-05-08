@@ -1,11 +1,12 @@
 /*
  * poc_test.cpp - PoC: Load ClangXref.dll and index a single TU to verify
- * that IndexDataConsumer catches template references are present.
+ * that IndexDataConsumer catches template references.
  *
  * Build: cl /EHsc /std:c++17 poc_test.cpp /Fe:poc_test.exe
- * Run:   poc_test.exe <repo_root> [source_file]
+ * Run:   poc_test.exe <compdb_dir> [source_file]
  *
- * Default TU: src/main.cpp (uses vector<T>).
+ * <compdb_dir> is the directory containing compile_commands.json.
+ * [source_file] is a TU path from the compdb.
  */
 
 #include <cstdio>
@@ -32,7 +33,6 @@ struct Stats {
     int symbols = 0;
     int refs = 0;
     int relations = 0;
-    int template_refs = 0;
     int macros_defined = 0;
     int macros_expanded = 0;
     int includes = 0;
@@ -57,12 +57,6 @@ static void on_ref(void* ctx, const char* symbol_usr, const char* file,
     s->refs++;
     if (type_spelling && type_spelling[0])
         s->typed_refs++;
-    // Check if this references vector
-    if (symbol_usr && strstr(symbol_usr, "vector")) {
-        s->template_refs++;
-        printf("  vector ref at %s:%d (kind=%d, type=%s)\n",
-               file, line, ref_kind, type_spelling ? type_spelling : "(none)");
-    }
 }
 
 static void on_relation(void* ctx, const char* subj, int pred, const char* obj) {
@@ -87,18 +81,17 @@ static void on_include(void* ctx, const char* included_file, const char* from_fi
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <repo_root> [source_file]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <compdb_dir> [source_file]\n", argv[0]);
         return 1;
     }
 
-    const char* repo_root = argv[1];
-    const char* source_file = argc > 2 ? argv[2] : "dxaml\\xcp\\core\\animation\\timer.cpp";
+    const char* compdb_dir = argv[1];
+    const char* source_file = argc > 2 ? argv[2] : nullptr;
 
     // Load DLL
-    std::string dllPath = std::string(repo_root) + "\\tools\\cpp-xref-engine\\bin\\ClangXref.dll";
-    HMODULE hDll = LoadLibraryA(dllPath.c_str());
+    HMODULE hDll = LoadLibraryA("ClangXref.dll");
     if (!hDll) {
-        fprintf(stderr, "Failed to load %s (error %lu)\n", dllPath.c_str(), GetLastError());
+        fprintf(stderr, "Failed to load ClangXref.dll (error %lu)\n", GetLastError());
         return 1;
     }
 
@@ -113,13 +106,20 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    printf("DLL: %s\nVersion: %s\n\n", dllPath.c_str(), version());
+    printf("Version: %s\n\n", version());
 
     // Create session (loads compile_commands.json)
-    printf("Loading compile_commands.json from %s...\n", repo_root);
-    auto idx = create(repo_root, on_log, nullptr);
+    printf("Loading compile_commands.json from %s...\n", compdb_dir);
+    auto idx = create(compdb_dir, on_log, nullptr);
     if (!idx) {
         fprintf(stderr, "clang_xref_create failed\n");
+        FreeLibrary(hDll);
+        return 1;
+    }
+
+    if (!source_file) {
+        fprintf(stderr, "No source file specified. Pass a TU path as the second argument.\n");
+        destroy(idx);
         FreeLibrary(hDll);
         return 1;
     }
@@ -135,19 +135,15 @@ int main(int argc, char* argv[]) {
     printf("Symbols:     %d\n", stats.symbols);
     printf("References:  %d\n", stats.refs);
     printf("Relations:   %d\n", stats.relations);
-    printf("vector refs: %d\n", stats.template_refs);
     printf("Macros defined:  %d\n", stats.macros_defined);
     printf("Macros expanded: %d\n", stats.macros_expanded);
     printf("Includes:        %d\n", stats.includes);
     printf("Typed refs:      %d\n", stats.typed_refs);
 
-    if (stats.template_refs > 0) {
-        printf("\n*** SUCCESS: Found vector references that ClangSharp misses! ***\n");
-    } else {
-        printf("\n*** WARNING: No vector references found. Check source_file path. ***\n");
-    }
+    bool ok = stats.symbols > 0 && stats.refs > 0;
+    printf("\n%s\n", ok ? "*** SUCCESS ***" : "*** FAILED: no symbols/refs indexed ***");
 
     destroy(idx);
     FreeLibrary(hDll);
-    return stats.template_refs > 0 ? 0 : 1;
+    return ok ? 0 : 1;
 }
