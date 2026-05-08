@@ -1,11 +1,11 @@
-# mcpp
+# mcpp: A C++ Semantic MCP Server
 
 An [MCP](https://modelcontextprotocol.io) server that gives AI agents
 **call graphs, cross-references, and impact analysis** for C++ codebases.
 
-Without mcpp, your AI agent greps through source files — it guesses at
-call relationships, misses template references, and can't answer "what
-breaks if I change this?" With mcpp, it gets precise, Clang-parsed
+With mcpp, your agents don’t have to grep through source files.  No more
+guessing call relationships, missing template references, or wondering
+"what breaks if I change this?".  mcpp gives precise, Clang-parsed
 semantic data: every caller, every call chain, every override.
 
 **What your agent can do with mcpp:**
@@ -14,14 +14,14 @@ semantic data: every caller, every call chain, every override.
 - *"What's the blast radius if I change `Scene::update`?"* → transitive impact
 - *"Is `Aabb::intersects` dead code?"* → zero callers = dead
 
-Works with Copilot CLI, VS Code Copilot, Claude Desktop, Cursor, etc.
-
 ## Quick start
 
 ```
-mcpp index path/to/build/          # needs compile_commands.json
-mcpp serve path/to/build/xref.db   # start MCP server
+mcpp index path/to/compile_commands.json
 ```
+
+This builds `xref.db` and prints a config snippet — paste it into your
+MCP client and you're done.
 
 ## Usage
 
@@ -33,28 +33,15 @@ database.
 
 ```
 mcpp index path/to/compile_commands.json          # output: xref.db next to compdb
-mcpp index path/to/build/                         # directory works too
 mcpp index path/to/build/ -o /tmp/xref.db         # explicit output path
 mcpp index compile_commands.json -j 4             # limit threads (default: all cores)
 ```
 
 After indexing, `mcpp` prints a `.mcp.json` snippet to stdout for easy copy-paste.
-
-### `serve` — Start MCP server
-
-Loads a pre-built `xref.db` and serves semantic queries over stdio.
-
-```
-mcpp serve xref.db
-```
-
-### MCP client configuration
-
-`mcpp index` prints a ready-to-use JSON snippet after indexing.
 Drop it into your MCP client's config:
 
-- **Copilot CLI**: `~/.copilot/mcp-config.json` or `/mcp add`
-- **VS Code Copilot**: `.github/copilot/mcp.json` in your repo
+- **Claude/Copilot CLI**: `//.mcp.json` (repo-root), `~/.copilot/mcp-config.json` or `/mcp add`
+- **VS Code Copilot**: `//.github/copilot/mcp.json` in your repo
 - **Claude Desktop**: `claude_desktop_config.json`
 
 The snippet uses the `mcpServers` format supported by most MCP clients:
