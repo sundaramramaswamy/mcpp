@@ -16,6 +16,12 @@ Parked features and known gaps. Pick these up when the core is working end-to-en
 
 ## Should-do (polish)
 
+- [x] **Flag adjuster: `/external:I` support** — done. Rewrite `/external:I<path>`
+  to `/I<path>`, drop other `/external:` flags.
+
+- [x] **Flag adjuster: skip `@responsefile` args** — done. Drop args starting
+  with `@` (C++20 module maps).
+
 - [ ] **Colored CLI output** — `--color auto|always|never` for subcommand output
   (index progress, serve status, errors). Apply to McpLogger stderr too.
 
