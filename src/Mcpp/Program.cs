@@ -68,6 +68,14 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
         Environment.Exit(1);
     }
 
+    // Validate output path is a file, not a directory
+    var dbPath = output.FullName;
+    if (Directory.Exists(dbPath))
+    {
+        McpLogger.Log("Startup", $"-o must be a file path, not a directory: {dbPath}", "ERROR");
+        Environment.Exit(1);
+    }
+
     // Probe ClangXref.dll
     NativeIndexer.RegisterResolver(compdbDir);
     string dllVersion;
@@ -86,7 +94,6 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
         return;
     }
 
-    var dbPath = output.FullName;
     McpLogger.Log("Startup", $"Indexing {compdbPath} → {dbPath} ({threads} threads)");
 
     var db = new XrefDatabase(dbPath);
@@ -95,6 +102,12 @@ static void RunIndex(FileInfo input, FileInfo output, int threads)
     var sw = System.Diagnostics.Stopwatch.StartNew();
     indexer.BuildIndex(CancellationToken.None);
     sw.Stop();
+
+    if (db.Error != null)
+    {
+        McpLogger.Log("Startup", $"Indexing failed after {sw.Elapsed.TotalSeconds:F1}s", "ERROR");
+        Environment.Exit(1);
+    }
 
     var stats = db.GetStats();
     McpLogger.Log("Startup",
