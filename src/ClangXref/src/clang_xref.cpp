@@ -670,20 +670,30 @@ static bool isKeptFlag(llvm::StringRef Flag) {
 static clang::tooling::ArgumentsAdjuster getMsvcAdjuster() {
     return [](const clang::tooling::CommandLineArguments& Args,
               llvm::StringRef Filename) {
+        // Normalize Filename for path comparison (forward slashes, lowercase)
+        llvm::SmallString<256> NormFilename(Filename);
+        std::replace(NormFilename.begin(), NormFilename.end(), '\\', '/');
+        auto NormFilenameRef = llvm::StringRef(NormFilename).lower();
+
         clang::tooling::CommandLineArguments Adjusted;
         Adjusted.push_back(Args.empty() ? "clang" : Args[0]);
         Adjusted.push_back("--driver-mode=cl");
         for (size_t i = 1; i < Args.size(); ++i) {
             llvm::StringRef A(Args[i]);
-            // Keep the source file that ClangTool appends (matches Filename)
-            if (A == Filename) {
-                Adjusted.push_back(Args[i]);
+            // Keep the source file (path-aware: normalize slashes, case-insensitive)
+            if (A.ends_with(".cpp") || A.ends_with(".cc") ||
+                A.ends_with(".cxx") || A.ends_with(".c")) {
+                llvm::SmallString<256> NormA(A);
+                std::replace(NormA.begin(), NormA.end(), '\\', '/');
+                if (llvm::StringRef(NormA).equals_insensitive(NormFilenameRef)) {
+                    Adjusted.push_back(Args[i]);
+                    continue;
+                }
+                // Not the target source file — skip it
                 continue;
             }
-            // Skip other source files, /c, output flags, @response files
-            if (A.ends_with(".cpp") || A.ends_with(".cc") ||
-                A.ends_with(".cxx") || A.ends_with(".c") ||
-                A.ends_with(".obj") || A.ends_with(".exe") ||
+            // Skip output files, /c, @response files
+            if (A.ends_with(".obj") || A.ends_with(".exe") ||
                 A == "/c" || A == "-c" ||
                 A.starts_with("@"))
                 continue;
