@@ -10,9 +10,10 @@ Parked features and known gaps. Pick these up when the core is working end-to-en
 - [x] **Build ClangXref.dll** — done. LLVM 21.1.1 deps downloaded, DLL built
   (28 MB) at `bin/ClangXref.dll`.
 
-- [ ] **End-to-end test** — index a real project with `mcpp index`, then `mcpp serve`.
-  Test candidates: `D:\Code\tryouts\ProtoMario` and `D:\Code\tryouts\CG\Partize`.
-  These need a `compile_commands.json` first (CMake or manual).
+- [x] **End-to-end test** — done. Indexed Partize (35 TUs, 54k symbols, 311k refs,
+  24k calls) and served via MCP stdio. Required three bug fixes discovered during
+  testing: source file path mismatch, `/external:I` + `@responsefile`, WAL
+  checkpoint before file move.
 
 ## Should-do (polish)
 
