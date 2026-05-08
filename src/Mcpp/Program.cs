@@ -114,6 +114,21 @@ static void RunIndex(FileInfo input, FileInfo? output, int threads)
         $"Done in {sw.Elapsed.TotalSeconds:F1}s — " +
         $"{stats.symbols} symbols, {stats.refs} refs, {stats.calls} calls");
 
+    // Print .mcp.json snippet for easy copy-paste
+    var exePath = Path.GetFullPath(Environment.ProcessPath ?? "mcpp");
+    var absDbPath = Path.GetFullPath(dbPath);
+    Console.WriteLine();
+    Console.WriteLine("Add to .mcp.json:");
+    Console.WriteLine($@"{{
+  ""mcpServers"": {{
+    ""mcpp"": {{
+      ""type"": ""stdio"",
+      ""command"": ""{exePath.Replace("\\", "\\\\")}"",
+      ""args"": [""serve"", ""{absDbPath.Replace("\\", "\\\\")}""]
+    }}
+  }}
+}}");
+
     // Close DB (checkpoints WAL) and clean up sidecar files
     db.Dispose();
     SqliteConnection.ClearAllPools();

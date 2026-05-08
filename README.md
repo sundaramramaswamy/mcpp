@@ -22,6 +22,8 @@ mcpp index path/to/build/                -o xref.db   # directory works too
 mcpp index compile_commands.json -o xref.db -j 8      # limit threads
 ```
 
+After indexing, `mcpp` prints a `.mcp.json` snippet to stdout for easy copy-paste.
+
 ### `serve` — Start MCP server
 
 Loads a pre-built `xref.db` and serves semantic queries over MCP.
