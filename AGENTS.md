@@ -14,14 +14,15 @@ should not be revisited without good reason.
 ## Usage
 
 ```
-mcpp index compile_commands.json -o xref.db [-j N]
+mcpp index path/to/build/                         # xref.db next to compdb
+mcpp index compile_commands.json -o xref.db       # explicit output
 mcpp serve xref.db
 ```
 
 ## Project layout
 
 ```
-D:\Code\mcpp\
+mcpp/
 ├── README.md
 ├── BACKLOG.md
 ├── AGENTS.md                      # This file
@@ -36,8 +37,8 @@ D:\Code\mcpp\
 └── src/
     ├── ClangXref/                 # Native C++ DLL (IndexDataConsumer)
     │   ├── ClangXref.vcxproj
-    │   ├── include/clang_xref.h   # C-ABI: 6 exports, 8 callback typedefs
-    │   └── src/clang_xref.cpp     # ~1300 lines, LLVM 21.1.1
+    │   ├── include/clang_xref.h   # C-ABI: 6 exports, 7 typedefs
+    │   └── src/clang_xref.cpp     # ~1350 lines, LLVM 21.1.1
     └── Mcpp/                      # C# MCP server + indexer (.NET 8)
         ├── Mcpp.csproj
         ├── Program.cs             # Subcommand dispatch (System.CommandLine 2.0.5)
@@ -48,7 +49,7 @@ D:\Code\mcpp\
         │   ├── CallGraphSearch.cs # In-memory BFS, impact radius
         │   └── McpLogger.cs       # Structured logging to stderr + file
         └── Tools/
-            └── CppSemanticTools.cs # MCP tools: callers, refs, definitions, call graph
+            └── CppSemanticTools.cs # 11 MCP tools: callers, refs, call graph, etc.
 ```
 
 ## Two build systems
@@ -69,10 +70,15 @@ libs on first build. Both DLL and exe output to `bin/`.
 2. **Per-TU DB flush** — flush immediately under lock, don't accumulate
 3. **SEH two-tier retry** — DLL retries inline, C# retries failures sequentially
 4. **Shared CompilationDatabase** — `shared_ptr` behind mutex, loaded once
-5. **MSVC flag whitelist** — only keep `/I`, `/D`, `/std:`, `/TP`, `/Zc:`, `/wd`
-6. **Ref/call dedup** — `UNIQUE` constraints + `INSERT OR IGNORE`
-7. **Per-query SQLite connections** — WAL mode, new read connection per query
-8. **GC.KeepAlive** — pin P/Invoke delegate pointers
+5. **MSVC flag whitelist** — only keep `/I`, `/D`, `/std:`, `-std:`, `/TP`, `/Zc:`, `/wd`;
+   rewrite `/external:I` → `/I`; drop `@responsefile` args
+6. **System header filter** — `SM.isInSystemHeader(Loc)` not path-prefix matching,
+   so out-of-tree builds (CMake `build/` vs `src/`) work correctly
+7. **Ref/call dedup** — `UNIQUE` constraints + `INSERT OR IGNORE`
+8. **Per-query SQLite connections** — WAL mode, new read connection per query
+9. **WAL checkpoint on close** — explicit `PRAGMA wal_checkpoint(TRUNCATE)` before
+   closing, so `File.Move` in SwapDatabase doesn't orphan the WAL sidecar
+10. **GC.KeepAlive** — pin P/Invoke delegate pointers
 
 ## MCP SDK
 
