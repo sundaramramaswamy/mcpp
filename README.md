@@ -1,16 +1,26 @@
-# mcpp — C++ Cross-Reference MCP Server
+# mcpp
 
-Semantic C++ code analysis for AI agents. Indexes MSVC-compiled C++ projects
-into a SQLite database, then serves cross-reference queries over MCP (stdio).
+An [MCP](https://modelcontextprotocol.io) server that gives AI agents
+**call graphs, cross-references, and impact analysis** for C++ codebases.
+
+Without mcpp, your AI agent greps through source files — it guesses at
+call relationships, misses template references, and can't answer "what
+breaks if I change this?" With mcpp, it gets precise, Clang-parsed
+semantic data: every caller, every call chain, every override.
+
+**What your agent can do with mcpp:**
+- *"Who calls `HashGrid::query`?"* → precise callers, not grep matches
+- *"Show the call path from `main` to `Renderer::render`"* → full chain
+- *"What's the blast radius if I change `Scene::update`?"* → transitive impact
+- *"Is `Aabb::intersects` dead code?"* → zero callers = dead
+
+Works with Copilot CLI, VS Code Copilot, Claude Desktop, Cursor, etc.
 
 ## Quick start
 
 ```
-# Index a project (needs compile_commands.json from CMake, Bear, etc.)
-mcpp index path/to/build/
-
-# Start MCP server
-mcpp serve path/to/build/xref.db
+mcpp index path/to/build/          # needs compile_commands.json
+mcpp serve path/to/build/xref.db   # start MCP server
 ```
 
 ## Usage
