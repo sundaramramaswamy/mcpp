@@ -284,8 +284,8 @@ public sealed class CppSemanticTools
      Title = "Find all classes that override a virtual method"),
      Description("Find which classes override a given virtual method. " +
                  "Uses the C++ override relation from the index — precise, not text search. " +
-                 "Example: find_virtual_overrides('MeasureOverride') or " +
-                 "find_virtual_overrides('CFrameworkElement::MeasureOverride')")]
+                 "Example: find_virtual_overrides('draw') or " +
+                 "find_virtual_overrides('Scene::update')")]
     public string FindVirtualOverrides(string method)
     {
         if (!CheckReady(out var msg, method)) return msg;
@@ -352,7 +352,7 @@ public sealed class CppSemanticTools
                  "Walks callers + virtual overrides outward N hops (max 200 nodes). " +
                  "Returns every affected symbol with depth, edge type, and connecting symbol " +
                  "so the client can reconstruct the full tree. " +
-                 "Example: get_impact_radius('CPopupRoot::CloseTopmostPopup', 3)")]
+                 "Example: get_impact_radius('HashGrid::add', 3)")]
     public string GetImpactRadius(string symbol, int depth = 3, int maxNodes = 200)
     {
         if (!CheckCallGraphReady(out var msg)) return msg;
@@ -402,28 +402,6 @@ public sealed class CppSemanticTools
             $"{result.Elapsed.TotalMilliseconds:F0}ms." +
             $"{(result.Capped ? $" Results capped at {maxNodes} — increase maxNodes to see more." : "")}_");
         return sb.ToString();
-    }
-
-    [McpServerTool(Name = "get_xref_status", ReadOnly = true,
-     Title = "Get C++ cross-reference index status"),
-     Description("Check the status of the C++ cross-reference index (whether it's ready, building, or unavailable).")]
-    public string GetXrefStatus()
-    {
-        if (_xrefDb.IsReady)
-        {
-            var (symbols, refs, calls) = _xrefDb.GetStats();
-            return $"C++ xref index: **ready**\n" +
-                   $"  - {symbols:N0} symbols, {refs:N0} references, {calls:N0} call edges\n" +
-                   $"  - DB: `{_xrefDb.DbPath}`";
-        }
-
-        if (_xrefDb.Error != null)
-            return $"C++ xref index: **unavailable**\n  - {_xrefDb.Error}";
-
-        if (_xrefDb.TotalFiles > 0)
-            return $"C++ xref index: **building** ({_xrefDb.Progress:F0}% — {_xrefDb.IndexedFiles}/{_xrefDb.TotalFiles} files)";
-
-        return "C++ xref index: **not started** — no compile_commands.json found.";
     }
 
     [McpServerTool(Name = "find_call_path", ReadOnly = true,
